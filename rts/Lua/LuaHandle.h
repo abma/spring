@@ -254,6 +254,7 @@ class CLuaHandle : public CEventClient
 		/// to calculate the current fast-forwarding % compared to the real game
 		void GameProgress(int frameNum);
 
+		void StackTrace();
 	public: // custom call-in  (inter-script calls)
 		virtual bool HasSyncedXCall(const string& funcName) { return false; }
 		virtual bool HasUnsyncedXCall(lua_State* srcState, const string& funcName) { return false; }
@@ -424,6 +425,7 @@ class CLuaHandle : public CEventClient
 		// FIXME: because CLuaUnitScript needs to access RunCallIn / activeHandle
 		friend class CLuaUnitScript;
 	private:
+		int StackTrace(lua_State* L);
 		struct staticLuaContextData {
 			staticLuaContextData() : activeFullRead(false), activeReadAllyTeam(CEventClient::NoAccessTeam), 
 				activeHandle(NULL), drawingEnabled(false) {}

@@ -28,6 +28,7 @@
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
+#include "Lua/LuaHandle.h"
 
 
 static const int MAX_STACKTRACE_DEPTH = 10;
@@ -507,6 +508,9 @@ namespace CrashHandler
 			}
 		}
 
+		CLuaHandle* luaHandle = CLuaHandle::GetActiveHandle();
+		if (luaHandle!=NULL)
+			luaHandle->StackTrace();
 		//! exit app if we catched a critical one
 		if (!keepRunning) {
 			//! don't handle any further signals when exiting

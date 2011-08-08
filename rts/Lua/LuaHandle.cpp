@@ -2993,6 +2993,75 @@ int CLuaHandle::CallOutUnsyncedUpdateCallIn(lua_State* L)
 	return 0;
 }
 
+void CLuaHandle::StackTrace(){
+	StackTrace(L_Sim);
+	StackTrace(L_Draw);
+	return;
+}
+
+#define LEVELS1 100
+#define LEVELS2 100
+int CLuaHandle::StackTrace(lua_State* L){
+	int level;
+	int firstpart = 1;  /* still before eventual `...' */
+	int arg = 1;
+	if (L==NULL){
+		printf("Null\n");
+		return 0;
+	}
+//  lua_State *L1 = getthread(L, &arg);
+	lua_State *L1 = L;
+	lua_Debug ar;
+	if (lua_isnumber(L, arg+2)) {
+		level = (int)lua_tointeger(L, arg+2);
+		lua_pop(L, 1);
+	} else {
+		level = (L == L1) ? 1 : 0;  /* level 0 may be this own function */
+	}
+//if (lua_gettop(L) == arg)
+//    lua_pushliteral(L, "");
+//  else if (!lua_isstring(L, arg+1)) return 1;  /* message is not a string */
+	if (!lua_isstring(L, arg+1)){
+		return 1;  /* message is not a string */
+	} else {
+		lua_pushliteral(L, "\n");
+	}
+	LOG("stack traceback:");
+	while (lua_getstack(L1, level++, &ar)) {
+		if (level > LEVELS1 && firstpart) {
+		/* no more than `LEVELS2' more levels? */
+			if (!lua_getstack(L1, level+LEVELS2, &ar)) {
+				level--;  /* keep going */
+			} else {
+				LOG("\n\t...");  /* too many levels */
+				while (lua_getstack(L1, level+LEVELS2, &ar)) {  /* find last levels */
+					level++;
+				}
+			}
+			firstpart = 0;
+			continue;
+		}
+		lua_getinfo(L1, "Snl", &ar);
+		LOG("%s:", ar.short_src);
+		if (ar.currentline > 0){
+			LOG("%d:", ar.currentline);
+		}
+		if (*ar.namewhat != '\0'){  /* is there a name? */
+			LOG(" in function " LUA_QS, ar.name);
+		} else {
+			if (*ar.what == 'm'){  /* main? */
+				LOG(" in main chunk");
+			} else {
+				if (*ar.what == 'C' || *ar.what == 't') {
+					LOG(" ?");  /* C function or tail call */
+				}else {
+					LOG(" in function <%s:%d>", ar.short_src, ar.linedefined);
+				}
+			}
+		}
+	}
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/
